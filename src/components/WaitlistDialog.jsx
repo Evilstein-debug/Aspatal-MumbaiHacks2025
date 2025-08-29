@@ -42,7 +42,6 @@ function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
       return;
     }
 
-    // Simulate API call - replace with actual API endpoint
     toast.success("Added to waitlist! We'll contact you soon.");
     
     // Reset form and close dialog

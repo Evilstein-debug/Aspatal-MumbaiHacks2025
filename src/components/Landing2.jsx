@@ -16,11 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
 import { toast } from "sonner";
-import { useState } from "react";
 import WaitlistDialog from "./WaitlistDialog";
 
 function Landing2() {
@@ -40,7 +36,7 @@ function Landing2() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <Hospital className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">Aस्पताल</span>
+              <a className="text-2xl font-bold text-gray-900" href="#hero">Aस्पताल</a>
             </div>
             <div className="hidden md:flex space-x-10 ml-22">
               <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
@@ -62,7 +58,7 @@ function Landing2() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4 grid grid-cols-1 lg:grid-cols-2">
+      <section id="hero" className="pt-20 pb-16 px-4 grid grid-cols-1 lg:grid-cols-2">
 
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-8">
