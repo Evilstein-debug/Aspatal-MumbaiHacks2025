@@ -20,6 +20,18 @@ import { toast } from "sonner";
 import WaitlistDialog from "./WaitlistDialog";
 
 function Landing2() {
+
+  const handleNavClick = (e, targetId) => {
+    e.preventDefault()
+    const element = document.getElementById(targetId)
+    if(element){
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      })
+    }
+  }
+
   const handleStartTrial = () => {
     toast.info("Coming Soon.")
   }
@@ -36,12 +48,20 @@ function Landing2() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2">
               <Hospital className="h-8 w-8 text-blue-600" />
-              <a className="text-2xl font-bold text-gray-900" href="#hero">Aस्पताल</a>
+              <a className="text-2xl font-bold text-gray-900" href="#hero"
+                 onClick={(e) => handleNavClick(e, "hero")}
+              >Aस्पताल</a>
             </div>
             <div className="hidden md:flex space-x-10 ml-22">
-              <a href="#features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Features</a>
-              <a href="#how-it-works" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">How It Works</a>
-              <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors">Contact</a>
+              <a href="features" className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                 onClick={(e) => handleNavClick(e, 'features')}
+              >Features</a>
+              <a href="#how-it-works" className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                 onClick={(e) => handleNavClick(e, "how-it-works")}
+              >How It Works</a>
+              <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium transition-colors"
+                 onClick={(e) => handleNavClick(e, "contact")}
+              >Contact</a>
             </div>
             <div className="flex items-center space-x-4">
               <WaitlistDialog>
