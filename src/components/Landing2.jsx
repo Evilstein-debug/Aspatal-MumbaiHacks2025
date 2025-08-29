@@ -165,9 +165,9 @@ function Landing2() {
                 description: "Share ambulances, medical equipment, and specialized staff across your hospital network."
               }
             ].map((feature, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow duration-300">
+              <Card key={index} className="hover:shadow-lg transition-shadow duration-300 bg-blue-100">
                 <CardHeader>
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center mb-4">
                     <feature.icon className="h-6 w-6 text-blue-600" />
                   </div>
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
@@ -215,9 +215,9 @@ function Landing2() {
               }
             ].map((step, index) => (
               <div key={index} className="text-center">
-                <Card className="p-8">
+                <Card className="p-8 outline-2 outline-gray-200 hover:shadow-xl transition-shadow duration-300">
                   <CardContent className="space-y-4">
-                    <Badge variant="outline" className="text-2xl font-bold px-4 py-2 text-blue-600">
+                    <Badge variant="secondary" className="text-2xl font-bold px-4 py-2 text-blue-600">
                       {step.step}
                     </Badge>
                     <step.icon className="h-16 w-16 mx-auto text-gray-700" />
