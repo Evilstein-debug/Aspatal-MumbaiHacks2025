@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle, Di
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Button } from "./ui/button";
+import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 
 function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
@@ -54,16 +55,18 @@ function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">Join the Waitlist</DialogTitle>
-          <DialogDescription className="text-center text-gray-600">
+          <DialogTitle className="text-2xl font-bold text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            Join the Waitlist
+          </DialogTitle>
+          <DialogDescription className="text-center text-gray-600 mt-2">
             Be the first to experience Aस्पताल when we launch. We'll notify you as soon as it's ready!
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleWaitlistSubmit} className="space-y-6">
+        <form onSubmit={handleWaitlistSubmit} className="space-y-5 pt-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-sm font-semibold">Email Address</Label>
             <Input
               id="email"
               name="email"
@@ -72,10 +75,11 @@ function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
               value={formData.email}
               onChange={handleInputChange}
               required
+              className="transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone" className="text-sm font-semibold">Phone Number</Label>
             <Input
               id="phone"
               name="phone"
@@ -84,6 +88,7 @@ function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
               value={formData.phone}
               onChange={handleInputChange}
               required
+              className="transition-all focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           <div className="flex gap-3 pt-4">
@@ -91,12 +96,16 @@ function WaitlistDialog({ children, triggerText = "Join Waitlist" }) {
               type="button" 
               variant="outline" 
               onClick={() => setIsDialogOpen(false)}
-              className="flex-1"
+              className="flex-1 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
+            <Button 
+              type="submit" 
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300"
+            >
               Join Waitlist
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
         </form>
