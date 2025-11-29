@@ -23,3 +23,4 @@ Landing.jsx
 *.njsproj
 *.sln
 *.sw?
+.env
