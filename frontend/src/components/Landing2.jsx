@@ -21,8 +21,10 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import WaitlistDialog from "./WaitlistDialog";
+import { useNavigate } from "react-router-dom";
 
 function Landing2({ onNavigateToDashboard }) {
+  const navigate = useNavigate()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -46,16 +48,20 @@ function Landing2({ onNavigateToDashboard }) {
     }
   }
 
-  const handleStartTrial = () => {
-    toast.info("Coming Soon.");
-  }
-
   const handleDemo = () => {
     toast.info("Demo Coming Soon.");
   }
 
+  const handleStartTrial = () => {
+    navigate('/dashboard'); // Navigate to dashboard
+  }
+
+  const handleNavigateToDashboard = () => {
+    navigate('/dashboard');
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-slate-50">
       {/* Navigation */}
       <nav className={`bg-white/80 backdrop-blur-md border-b sticky top-0 z-50 transition-all duration-300 ${
         isScrolled ? 'shadow-lg' : 'shadow-sm'
@@ -67,7 +73,7 @@ function Landing2({ onNavigateToDashboard }) {
                 <Hospital className="h-8 w-8 text-blue-600 animate-pulse" />
                 <Sparkles className="h-3 w-3 text-yellow-400 absolute -top-1 -right-1 animate-ping" />
               </div>
-              <a className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-red-600 bg-clip-text text-transparent hover:scale-105 transition-transform" 
+              <a className="text-2xl font-bold bg-linear-to-r from-blue-600 to-red-600 bg-clip-text text-transparent hover:scale-105 transition-transform" 
                  href="#hero"
                  onClick={(e) => handleNavClick(e, "hero")}
               >Aस्पताल</a>
@@ -103,7 +109,7 @@ function Landing2({ onNavigateToDashboard }) {
               </WaitlistDialog>
               <Button 
                 onClick={onNavigateToDashboard || handleStartTrial} 
-                className="hidden md:block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300"
+                className="hidden md:block bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 {onNavigateToDashboard ? "Go to Dashboard" : "Get Started"}
               </Button>
@@ -151,7 +157,7 @@ function Landing2({ onNavigateToDashboard }) {
                     Sign In
                   </Button>
                 </WaitlistDialog>
-                <Button onClick={handleStartTrial} className="w-full bg-gradient-to-r from-blue-600 to-blue-700">
+                <Button onClick={handleStartTrial} className="w-full bg-linear-to-r from-blue-600 to-blue-700">
                   Get Started
                 </Button>
               </div>
@@ -166,17 +172,17 @@ function Landing2({ onNavigateToDashboard }) {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             <div className="text-center lg:text-left space-y-6 animate-in fade-in slide-in-from-left duration-700">
               <div className="flex justify-center lg:justify-start mb-6">
-                <Badge variant="secondary" className="text-sm font-semibold px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 border-blue-200 hover:scale-105 transition-transform cursor-default">
+                <Badge variant="secondary" className="text-sm font-semibold px-4 py-2 bg-linear-to-r from-blue-100 to-purple-100 border-blue-200 hover:scale-105 transition-transform cursor-default">
                   <Sparkles className="h-4 w-4 mr-2 text-blue-600 inline" />
                   AI-POWERED HEALTHCARE NETWORK
                 </Badge>
               </div>
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight">
                 <span className="block text-gray-900">Connect Every</span>
-                <span className="block bg-gradient-to-r from-red-600 to-red-700 bg-clip-text text-transparent animate-pulse">
+                <span className="block bg-linear-to-r from-red-600 to-red-700 bg-clip-text text-transparent animate-pulse">
                   Hospital.
                 </span>
-                <span className="block bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+                <span className="block bg-linear-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
                   Save Every Life.
                 </span>
               </h1>
@@ -186,7 +192,7 @@ function Landing2({ onNavigateToDashboard }) {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <WaitlistDialog>
-                  <Button size="lg" className="text-lg px-8 py-6 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group">
+                  <Button size="lg" className="text-lg px-8 py-6 bg-linear-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-lg hover:shadow-xl transition-all duration-300 group">
                     Join The Waitlist 
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
@@ -199,7 +205,7 @@ function Landing2({ onNavigateToDashboard }) {
 
             <div className="mt-8 lg:mt-0 flex justify-center lg:justify-end animate-in fade-in slide-in-from-right duration-700">
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-400 to-red-400 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
+                <div className="absolute inset-0 bg-linear-to-r from-blue-400 to-red-400 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
                 <img 
                   className="relative rounded-3xl shadow-2xl transform hover:scale-105 transition-transform duration-500"
                   src="/Hospital Management.png" 
@@ -213,7 +219,7 @@ function Landing2({ onNavigateToDashboard }) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-gradient-to-b from-white to-blue-50/30">
+      <section className="py-16 bg-linear-to-b from-white to-blue-50/30">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
             {[
@@ -225,7 +231,7 @@ function Landing2({ onNavigateToDashboard }) {
               <Card key={index} className="text-center border-2 hover:border-blue-300 hover:shadow-lg transition-all duration-300 hover:scale-105 bg-white/80 backdrop-blur-sm">
                 <CardContent className="pt-6">
                   <stat.icon className={`h-10 w-10 md:h-12 md:w-12 mx-auto mb-4 ${stat.color} animate-bounce`} style={{ animationDelay: `${index * 0.1}s` }} />
-                  <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+                  <div className="text-3xl md:text-4xl font-bold text-gray-900 mb-2 bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text">
                     {stat.number}
                   </div>
                   <div className="text-sm md:text-base text-gray-600 font-medium">{stat.label}</div>
@@ -239,13 +245,13 @@ function Landing2({ onNavigateToDashboard }) {
       <Separator />
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gradient-to-b from-slate-50 to-white">
+      <section id="features" className="py-20 bg-linear-to-b from-slate-50 to-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16 animate-in fade-in duration-700">
             <Badge variant="secondary" className="mb-4 bg-blue-100 text-blue-700 border-blue-200">
               Features
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               Powerful Features
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
@@ -297,7 +303,7 @@ function Landing2({ onNavigateToDashboard }) {
                 className="group hover:shadow-2xl transition-all duration-300 bg-white border-2 hover:border-blue-300 hover:scale-105 overflow-hidden"
               >
                 <CardHeader className="relative">
-                  <div className={`w-14 h-14 bg-gradient-to-br ${feature.gradient} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <div className={`w-14 h-14 bg-linear-to-br ${feature.gradient} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                     <feature.icon className="h-7 w-7 text-white" />
                   </div>
                   <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">
@@ -318,13 +324,13 @@ function Landing2({ onNavigateToDashboard }) {
       <Separator />
 
       {/* How It Works Section */}
-      <section id="how-it-works" className="py-20 bg-gradient-to-b from-white via-blue-50/20 to-white">
+      <section id="how-it-works" className="py-20 bg-linear-to-b from-white via-blue-50/20 to-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-16 animate-in fade-in duration-700">
             <Badge variant="secondary" className="mb-4 bg-purple-100 text-purple-700 border-purple-200">
               Process
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-linear-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
               How It Works
             </h2>
             <p className="text-xl text-gray-600">Simple steps to transform your healthcare network</p>
@@ -332,7 +338,7 @@ function Landing2({ onNavigateToDashboard }) {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             {/* Connection Line for Desktop */}
-            <div className="hidden md:block absolute top-24 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-blue-200 via-blue-400 to-blue-200"></div>
+            <div className="hidden md:block absolute top-24 left-1/4 right-1/4 h-0.5 bg-linear-to-r from-blue-200 via-blue-400 to-blue-200"></div>
             
             {[
               {
@@ -361,11 +367,11 @@ function Landing2({ onNavigateToDashboard }) {
                 <Card className="p-8 border-2 hover:border-blue-300 hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-white group">
                   <CardContent className="space-y-6">
                     <div className="relative inline-block">
-                      <Badge className={`text-2xl font-bold px-6 py-3 bg-gradient-to-r ${step.gradient} text-white border-0 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
+                      <Badge className={`text-2xl font-bold px-6 py-3 bg-linear-to-r ${step.gradient} text-white border-0 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                         {step.step}
                       </Badge>
                     </div>
-                    <div className={`w-20 h-20 mx-auto bg-gradient-to-br ${step.gradient} rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform duration-300`}>
+                    <div className={`w-20 h-20 mx-auto bg-linear-to-br ${step.gradient} rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-transform duration-300`}>
                       <step.icon className="h-10 w-10 text-white" />
                     </div>
                     <CardTitle className="text-xl group-hover:text-blue-600 transition-colors">
@@ -385,8 +391,8 @@ function Landing2({ onNavigateToDashboard }) {
       <Separator />
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-blue-600 via-blue-700 to-purple-700 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/10 [mask-image:linear-gradient(0deg,white,transparent)]"></div>
+      <section className="py-20 bg-linear-to-br from-blue-600 via-blue-700 to-purple-700 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/10 mask-[linear-gradient(0deg,white,transparent)]"></div>
         <div className="max-w-4xl mx-auto text-center px-4 relative z-10">
           <div className="inline-block mb-6">
             <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
@@ -423,13 +429,13 @@ function Landing2({ onNavigateToDashboard }) {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-b from-gray-900 to-black text-white py-16">
+      <footer className="bg-linear-to-b from-gray-900 to-black text-white py-16">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="md:col-span-1">
               <div className="flex items-center space-x-2 mb-4">
                 <Hospital className="h-8 w-8 text-blue-400 animate-pulse" />
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                <span className="text-2xl font-bold bg-linear-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                   Aस्पताल
                 </span>
               </div>

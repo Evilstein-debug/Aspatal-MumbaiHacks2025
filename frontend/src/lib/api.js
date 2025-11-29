@@ -138,3 +138,7 @@ export const predictionAPI = {
     }),
 };
 
+// Dashboard API
+export const dashboardAPI = {
+  getOverview: (hospitalId) => apiCall(`/dashboard/${hospitalId}/overview`),
+};

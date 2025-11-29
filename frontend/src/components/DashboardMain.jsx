@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Menu,
@@ -11,6 +12,7 @@ import {
   Users,
   AlertTriangle,
   TrendingUp,
+  RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -26,29 +28,130 @@ import EmergencyAlerts from "./dashboard/EmergencyAlerts";
 import PollutionIndexWidget from "./dashboard/PollutionIndexWidget";
 import PredictivePatientInflow from "./dashboard/PredictivePatientInflow";
 import PredictionDashboard from "./dashboard/PredictionDashboard";
-import socketService from "@/lib/socket";
 import SocketStatus from "./dashboard/SocketStatus";
+import socketService from "@/lib/socket";
+import { toast } from "sonner";
 
 function DashboardMain() {
+  const { hospitalId: routeHospitalId } = useParams();
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [activeTab, setActiveTab] = useState("overview");
-  const [hospitalId] = useState("default"); // In production, get from auth context
+  const [hospitalId] = useState(routeHospitalId || "default");
+  const [notifications, setNotifications] = useState([]);
+  const [dashboardData, setDashboardData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
+  // Clock timer
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
     }, 1000);
-    
-    // Initialize Socket.io connection when dashboard loads
+    return () => clearInterval(timer);
+  }, []);
+
+  // Fetch dashboard overview data from API
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `${import.meta.env.VITE_API_URL}/api/dashboard/${hospitalId}/overview`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
+        const result = await response.json();
+        if (result.success) {
+          setDashboardData(result.data);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+        toast.error("Failed to load dashboard data");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchDashboardData, 30000);
+
+    return () => clearInterval(interval);
+  }, [hospitalId]);
+
+  // Socket.io connection for real-time updates
+  useEffect(() => {
     socketService.connect();
     socketService.joinHospital(hospitalId);
-    
+
+    // Socket event handlers
+    const handleBedUpdate = (data) => {
+      toast.info("Bed occupancy updated");
+      setNotifications((prev) => [
+        ...prev,
+        { type: "bed", message: "Bed data updated", time: new Date() },
+      ]);
+    };
+
+    const handleEmergency = (data) => {
+      toast.error(`🚨 Emergency: ${data.patientName || "New case"}`);
+      setNotifications((prev) => [
+        ...prev,
+        { type: "emergency", message: `Emergency: ${data.patientName}`, time: new Date() },
+      ]);
+    };
+
+    const handleDoctorShift = (data) => {
+      toast.info(`👨‍⚕️ Dr. ${data.name} ${data.action}`);
+      setNotifications((prev) => [
+        ...prev,
+        { type: "doctor", message: `Dr. ${data.name} ${data.action}`, time: new Date() },
+      ]);
+    };
+
+    const handleOPDUpdate = (data) => {
+      toast.info(`OPD queue updated: ${data.queueLength} patients`);
+    };
+
+    const handleAlert = (data) => {
+      if (data.severity === "critical" || data.severity === "high") {
+        toast.error(`⚠️ ${data.title}: ${data.message}`);
+      } else {
+        toast.info(`${data.title}: ${data.message}`);
+      }
+      setNotifications((prev) => [
+        ...prev,
+        { type: "alert", message: data.title, time: new Date() },
+      ]);
+    };
+
+    // Subscribe to socket events
+    socketService.on("bed:occupancy:update", handleBedUpdate);
+    socketService.on("emergency:new", handleEmergency);
+    socketService.on("emergency:critical", handleEmergency);
+    socketService.on("doctor:shift:change", handleDoctorShift);
+    socketService.on("opd:queue:update", handleOPDUpdate);
+    socketService.on("alert:new", handleAlert);
+
     return () => {
-      clearInterval(timer);
+      socketService.off("bed:occupancy:update", handleBedUpdate);
+      socketService.off("emergency:new", handleEmergency);
+      socketService.off("emergency:critical", handleEmergency);
+      socketService.off("doctor:shift:change", handleDoctorShift);
+      socketService.off("opd:queue:update", handleOPDUpdate);
+      socketService.off("alert:new", handleAlert);
       socketService.leaveHospital(hospitalId);
     };
   }, [hospitalId]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    navigate("/");
+  };
 
   const tabs = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -74,7 +177,10 @@ function DashboardMain() {
               >
                 {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
-              <div className="flex items-center space-x-2">
+              <div
+                className="flex items-center space-x-2 cursor-pointer"
+                onClick={() => navigate("/")}
+              >
                 <LayoutDashboard className="h-6 w-6 text-blue-600" />
                 <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   Aस्पताल Dashboard
@@ -82,18 +188,20 @@ function DashboardMain() {
               </div>
             </div>
             <div className="flex items-center space-x-4">
+              <SocketStatus />
               <div className="hidden sm:block text-sm text-gray-600">
                 {currentTime.toLocaleTimeString()}
               </div>
-              <SocketStatus />
               <Button variant="ghost" size="icon" className="relative">
                 <Bell className="h-5 w-5" />
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                {notifications.length > 0 && (
+                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
+                )}
               </Button>
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" onClick={handleLogout}>
                 <LogOut className="h-5 w-5" />
               </Button>
             </div>
@@ -101,16 +209,15 @@ function DashboardMain() {
         </div>
       </nav>
 
-      {/* Main Content */}
       <div className="flex">
-        {/* Sidebar */}
+        {/* Sidebar Navigation */}
         <aside
           className={`${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-64 bg-white border-r shadow-lg lg:shadow-none transition-transform duration-300`}
+          } fixed lg:relative lg:translate-x-0 inset-y-0 left-0 z-40 w-64 bg-white border-r shadow-lg transition-transform duration-300 ease-in-out lg:block mt-16 lg:mt-0`}
         >
-          <div className="h-full overflow-y-auto p-4">
-            <nav className="space-y-2">
+          <nav className="h-full overflow-y-auto py-6 px-4">
+            <div className="space-y-2">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -120,133 +227,138 @@ function DashboardMain() {
                       setActiveTab(tab.id);
                       setSidebarOpen(false);
                     }}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                       activeTab === tab.id
-                        ? "bg-blue-100 text-blue-700 font-semibold"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-md"
+                        : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                     }`}
                   >
                     <Icon className="h-5 w-5" />
-                    <span>{tab.label}</span>
+                    <span className="font-medium">{tab.label}</span>
                   </button>
                 );
               })}
-            </nav>
-          </div>
+            </div>
+          </nav>
         </aside>
+
+        {/* Overlay for mobile */}
+        {sidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
 
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">
-          {activeTab === "overview" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Hospital Management Dashboard
-                </h1>
-                <p className="text-gray-600">
-                  Real-time monitoring and resource management
-                </p>
-              </div>
-
-              {/* Top Row - Bed Occupancy & Department Availability */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <BedOccupancyOverview />
-                <DepartmentAvailability />
-              </div>
-
-              {/* Second Row - Doctor Table & Sidebar Widgets */}
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <DoctorAvailabilityTable />
-                </div>
+          {loading && activeTab === "overview" ? (
+            <div className="flex items-center justify-center h-96">
+              <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <>
+              {/* Overview Tab - Enhanced with API data */}
+              {activeTab === "overview" && (
                 <div className="space-y-6">
-                  <LiveOPDCounter />
-                  <EmergencyAlerts />
-                  <PollutionIndexWidget />
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                      Hospital Management Dashboard
+                    </h1>
+                    <p className="text-gray-600">
+                      Real-time monitoring • Last updated:{" "}
+                      {dashboardData?.timestamp
+                        ? new Date(dashboardData.timestamp).toLocaleTimeString()
+                        : ""}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Left Column - Main Metrics */}
+                    <div className="lg:col-span-2 space-y-6">
+                      <BedOccupancyOverview
+                        hospitalId={hospitalId}
+                        data={dashboardData?.beds}
+                      />
+                      <DepartmentAvailability
+                        hospitalId={hospitalId}
+                        data={dashboardData?.doctors}
+                      />
+                      <DoctorAvailabilityTable hospitalId={hospitalId} />
+                      <PredictivePatientInflow hospitalId={hospitalId} />
+                    </div>
+
+                    {/* Right Column - Sidebar Metrics */}
+                    <div className="space-y-6">
+                      <LiveOPDCounter
+                        hospitalId={hospitalId}
+                        data={dashboardData?.opd}
+                      />
+                      <EmergencyAlerts
+                        hospitalId={hospitalId}
+                        alerts={dashboardData?.alerts}
+                      />
+                      <PollutionIndexWidget hospitalId={hospitalId} />
+                    </div>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Third Row - Predictive Graph */}
-              <div>
-                <PredictivePatientInflow />
-              </div>
-            </div>
-          )}
+              {/* Bed Occupancy Tab */}
+              {activeTab === "beds" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Bed Occupancy Management
+                  </h2>
+                  <BedOccupancyDashboard hospitalId={hospitalId} />
+                </div>
+              )}
 
-          {activeTab === "beds" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Bed Occupancy Management
-                </h1>
-                <p className="text-gray-600">Real-time bed availability tracking</p>
-              </div>
-              <BedOccupancyDashboard hospitalId={hospitalId} />
-            </div>
-          )}
+              {/* Doctor Shifts Tab */}
+              {activeTab === "shifts" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Doctor Shift Management
+                  </h2>
+                  <DoctorShiftManagement hospitalId={hospitalId} />
+                </div>
+              )}
 
-          {activeTab === "shifts" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Doctor Shift Management
-                </h1>
-                <p className="text-gray-600">Manage and monitor doctor schedules</p>
-              </div>
-              <DoctorShiftManagement hospitalId={hospitalId} />
-            </div>
-          )}
+              {/* OPD Tracking Tab */}
+              {activeTab === "opd" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    OPD Patient Tracking
+                  </h2>
+                  <OPDPatientTracking hospitalId={hospitalId} />
+                </div>
+              )}
 
-          {activeTab === "opd" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  OPD Patient Tracking
-                </h1>
-                <p className="text-gray-600">Monitor OPD queue and patient status</p>
-              </div>
-              <OPDPatientTracking hospitalId={hospitalId} />
-            </div>
-          )}
+              {/* Emergency Tab */}
+              {activeTab === "emergency" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Emergency Case Management
+                  </h2>
+                  <EmergencyCaseLogging hospitalId={hospitalId} />
+                </div>
+              )}
 
-          {activeTab === "emergency" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Emergency Case Logging
-                </h1>
-                <p className="text-gray-600">Track and manage emergency cases</p>
-              </div>
-              <EmergencyCaseLogging hospitalId={hospitalId} />
-            </div>
-          )}
-
-          {activeTab === "predictions" && (
-            <div className="space-y-6">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  Surge Predictions
-                </h1>
-                <p className="text-gray-600">
-                  Pollution spikes and festival season surge predictions
-                </p>
-              </div>
-              <PredictionDashboard hospitalId={hospitalId} />
-            </div>
+              {/* Predictions Tab */}
+              {activeTab === "predictions" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Predictive Analytics
+                  </h2>
+                  <PredictionDashboard hospitalId={hospitalId} />
+                </div>
+              )}
+            </>
           )}
         </main>
       </div>
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-      )}
     </div>
   );
 }
 
 export default DashboardMain;
-

@@ -18,6 +18,7 @@ import patientRoutes from "./routes/patientRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js"
 import transferRoutes from "./routes/transferRoutes.js";
 
 
@@ -55,6 +56,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/dashboard", dashboardRoutes)
 app.use("/api/transfers", transferRoutes);
 
 connectDB()
