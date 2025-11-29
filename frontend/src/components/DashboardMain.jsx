@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   TrendingUp,
   RefreshCw,
+  ArrowRightLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -28,6 +29,7 @@ import EmergencyAlerts from "./dashboard/EmergencyAlerts";
 import PollutionIndexWidget from "./dashboard/PollutionIndexWidget";
 import PredictivePatientInflow from "./dashboard/PredictivePatientInflow";
 import PredictionDashboard from "./dashboard/PredictionDashboard";
+import PatientTransferDashboard from "./dashboard/PatientTransferDashboard";
 import SocketStatus from "./dashboard/SocketStatus";
 import socketService from "@/lib/socket";
 import { toast } from "sonner";
@@ -160,6 +162,7 @@ function DashboardMain() {
     { id: "shifts", label: "Doctor Shifts", icon: Clock },
     { id: "opd", label: "OPD Tracking", icon: Users },
     { id: "emergency", label: "Emergency", icon: AlertTriangle },
+    { id: "transfers", label: "Transfers", icon: ArrowRightLeft },
     { id: "predictions", label: "Predictions", icon: TrendingUp },
   ];
 
@@ -348,6 +351,16 @@ function DashboardMain() {
                     Emergency Case Management
                   </h2>
                   <EmergencyCaseLogging hospitalId={hospitalId} />
+                </div>
+              )}
+
+              {/* Transfers Tab */}
+              {activeTab === "transfers" && (
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900 mb-6">
+                    Patient Transfer Management
+                  </h2>
+                  <PatientTransferDashboard hospitalId={hospitalId} />
                 </div>
               )}
 

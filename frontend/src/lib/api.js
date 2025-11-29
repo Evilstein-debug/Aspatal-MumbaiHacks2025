@@ -5,16 +5,21 @@ const SURGE_API_BASE_URL =
 // Helper function for API calls
 const apiCall = async (endpoint, options = {}) => {
   try {
+    const token = localStorage.getItem("token");
+    const headers = {
+      "Content-Type": "application/json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    };
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
       ...options,
     });
 
     if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({ error: response.statusText }));
+      throw new Error(errorData.error || `API error: ${response.statusText}`);
     }
 
     return await response.json();
@@ -252,4 +257,35 @@ export const surgeAPI = {
 // Dashboard API
 export const dashboardAPI = {
   getOverview: (hospitalId) => apiCall(`/dashboard/${hospitalId}/overview`),
+};
+
+// Transfer API
+export const transferAPI = {
+  findAvailableHospitals: (hospitalId, bedType, maxDistance) => {
+    const params = new URLSearchParams({ bedType });
+    if (maxDistance) params.append("maxDistance", maxDistance);
+    return apiCall(`/transfers/available/${hospitalId}?${params.toString()}`);
+  },
+  checkCapacity: (hospitalId, bedType) => {
+    const params = bedType ? new URLSearchParams({ bedType }) : "";
+    return apiCall(`/transfers/capacity/${hospitalId}${params ? `?${params.toString()}` : ""}`);
+  },
+  createTransferRequest: (hospitalId, data) =>
+    apiCall(`/transfers/request/${hospitalId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  getTransferRequests: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/transfers/requests/${hospitalId}${queryString ? `?${queryString}` : ""}`);
+  },
+  updateTransferStatus: (transferId, data) =>
+    apiCall(`/transfers/${transferId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  getTransferStatistics: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/transfers/statistics/${hospitalId}${queryString ? `?${queryString}` : ""}`);
+  },
 };
