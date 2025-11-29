@@ -1,0 +1,32 @@
+date,patient_count,icu_usage,oxygen_consumption,aqi,festival_day,festival_name,weekend,notes
+2025-11-01,208,39,288,132,false,,true,Weekend elective dip
+2025-11-02,196,38,274,128,false,,true,Weekend dip continues
+2025-11-03,238,46,322,154,false,,false,Normal OPD load
+2025-11-04,255,48,341,162,false,,false,Mild AQI rise
+2025-11-05,261,50,352,176,false,,false,Mumbai midweek rush
+2025-11-06,248,47,333,158,false,,false,Steady flow
+2025-11-07,236,45,318,152,false,,false,Pre-weekend softening
+2025-11-08,212,40,296,136,false,,true,Weekend lull
+2025-11-09,205,39,286,134,false,,true,Weekend lull
+2025-11-10,243,47,329,149,false,,false,Week start normalization
+2025-11-11,258,50,348,168,false,,false,Mild AQI spike
+2025-11-12,265,52,359,182,false,,false,Respiratory uptick
+2025-11-13,251,48,338,161,false,,false,Return to baseline
+2025-11-14,244,47,330,154,false,,false,Steady day
+2025-11-15,215,40,299,140,false,,true,Weekend elective dip
+2025-11-16,207,39,288,138,false,,true,Weekend dip continues
+2025-11-17,246,47,333,150,false,,false,Week start
+2025-11-18,259,50,350,170,false,,false,Urban AQI climb
+2025-11-19,272,53,369,212,false,,false,Pollution spike response
+2025-11-20,288,56,389,238,false,,false,Severe AQI impact
+2025-11-21,274,53,368,214,false,,false,Sustained respiratory load
+2025-11-22,230,43,310,162,false,,true,Weekend but still busy
+2025-11-23,218,41,302,148,false,,true,Weekend normalization
+2025-11-24,252,48,337,166,false,,false,OPD backlog catchup
+2025-11-25,267,51,357,178,false,,false,Pre-festival rush
+2025-11-26,295,57,395,226,true,Guru Nanak Jayanti,false,Festival crowd surge
+2025-11-27,284,55,381,218,false,,false,Post-festival follow-up
+2025-11-28,276,53,370,206,false,,false,Respiratory monitoring
+2025-11-29,268,51,358,192,false,,false,Stabilizing trend
+2025-11-30,214,41,301,142,false,,true,Weekend dip
+

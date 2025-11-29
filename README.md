@@ -9,12 +9,12 @@ A comprehensive hospital management system with real-time bed occupancy tracking
 - ✅ Doctor shift management
 - ✅ OPD patient tracking with queue management
 - ✅ Emergency case logging with triage levels
-- ✅ Pollution spikes & festival season surge predictions (placeholder API)
+- ✅ Dedicated surge forecasting microservice with Gemini + fallback logic
 
 ### Frontend (React + Vite)
 - ✅ Modern, responsive dashboard UI
 - ✅ Real-time data updates
-- ✅ Interactive charts and visualizations
+- ✅ Interactive charts and visualizations (Recharts + Chart.js)
 - ✅ Mobile-friendly design
 
 ## Tech Stack
@@ -61,21 +61,26 @@ A comprehensive hospital management system with real-time bed occupancy tracking
 │   │   └── server.js
 │   └── package.json
 │
-└── frontend/
-    ├── src/
-    │   ├── components/
-    │   │   ├── dashboard/
-    │   │   │   ├── BedOccupancyDashboard.jsx
-    │   │   │   ├── DoctorShiftManagement.jsx
-    │   │   │   ├── OPDPatientTracking.jsx
-    │   │   │   ├── EmergencyCaseLogging.jsx
-    │   │   │   └── PredictionDashboard.jsx
-    │   │   ├── DashboardMain.jsx
-    │   │   └── Landing2.jsx
-    │   ├── lib/
-    │   │   └── api.js              # API utility functions
-    │   └── App.jsx
-    └── package.json
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── dashboard/
+│   │   │   │   ├── BedOccupancyDashboard.jsx
+│   │   │   │   ├── DoctorShiftManagement.jsx
+│   │   │   │   ├── OPDPatientTracking.jsx
+│   │   │   │   ├── EmergencyCaseLogging.jsx
+│   │   │   │   └── PredictionDashboard.jsx
+│   │   │   ├── DashboardMain.jsx
+│   │   │   └── Landing2.jsx
+│   │   ├── lib/
+│   │   │   └── api.js              # API utility functions
+│   │   └── App.jsx
+│   └── package.json
+└── surge-backend/
+    ├── src/                       # CommonJS Express service
+    ├── scripts/                   # Data generator + seeding
+    ├── data/                      # Exported hospital_history.csv
+    └── README.md
 ```
 
 ## Setup Instructions
@@ -109,6 +114,31 @@ npm run dev
 
 The server will run on `http://localhost:8000`
 
+### Surge Forecasting Service Setup
+
+1. Navigate to the surge microservice:
+```bash
+cd surge-backend
+```
+
+2. Install dependencies and copy the sample environment:
+```bash
+npm install
+cp env.sample .env   # fill in MONGODB_URI and GEMINI_API_KEY
+```
+
+3. Generate the 30-day mock dataset, export the CSV, and seed MongoDB:
+```bash
+npm run seed
+```
+
+4. Start the CommonJS Express service (defaults to `http://localhost:9000`):
+```bash
+npm run dev
+```
+
+> The dashboard calls `/api/surge/forecast` from this service for Gemini-powered predictions with fallback logic.
+
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
@@ -126,6 +156,7 @@ npm install
 VITE_API_URL=http://localhost:8000/api
 VITE_SOCKET_URL=http://localhost:8000
 VITE_ENABLE_SOCKET=false
+VITE_SURGE_API_URL=http://localhost:9000/api/surge
 ```
 
 4. Start the development server:
@@ -195,10 +226,14 @@ Authorization: Bearer <your-token>
 - `PUT /api/emergency/:caseId` - Update emergency case
 
 ### Predictions
-- `GET /api/predictions/:hospitalId?` - Get predictions
+- `GET /api/predictions/:hospitalId?` - Legacy predictions list
 - `GET /api/predictions/:hospitalId?/upcoming` - Get upcoming predictions
 - `POST /api/predictions/:hospitalId` - Create prediction
 - `PUT /api/predictions/:predictionId/status` - Update prediction status
+
+### Surge Forecasting Microservice
+- `GET /api/surge/health` - Health/status probe
+- `GET /api/surge/forecast?hospitalId=aspatal-mumbai` - Gemini-enhanced prediction, AQI signal, festival proximity, surge classification, and recommended actions
 
 ## Usage
 
@@ -235,10 +270,11 @@ Authorization: Bearer <your-token>
 - Case status management
 
 ### Surge Predictions
-- Pollution-based surge predictions
-- Festival season surge predictions
-- Resource requirement estimates
-- Recommendations for preparation
+- Gemini-powered forecasting with strict JSON schema guardrails
+- Deterministic fallback blending 7-day averages, AQI impact, weekends, and festivals
+- Mock-data generator that exports CSV + seeds MongoDB in one command
+- Tailwind + Chart.js dashboard showing history plus tomorrow’s predicted point
+- Actionable recommendations + surge badges based on predicted load
 
 ## Development
 
@@ -289,7 +325,7 @@ curl -X GET http://localhost:8000/api/auth/profile \
 
 ## Notes
 
-- The prediction API uses placeholder logic. In production, integrate with actual pollution APIs and historical data analysis.
+- `/api/surge/forecast` is the recommended endpoint for predictions; the legacy `/api/predictions` routes remain for backwards compatibility.
 - Hospital ID can be set during registration or updated later. In production, implement proper hospital selection.
 - All timestamps are in UTC. Adjust for local timezone as needed.
 - Passwords are hashed using bcrypt before storage.
