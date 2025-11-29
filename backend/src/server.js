@@ -18,6 +18,8 @@ import patientRoutes from "./routes/patientRoutes.js";
 import alertRoutes from "./routes/alertRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import transferRoutes from "./routes/transferRoutes.js";
+
 
 const port = process.env.PORT || 8000
 const allowedOrigins = process.env.CORS_ORIGIN || "http://localhost:5173"
@@ -53,6 +55,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/alerts", alertRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/transfers", transferRoutes);
 
 connectDB()
 .then(() => {
