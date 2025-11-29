@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { emergencyAPI } from "@/lib/api";
 import socketService from "@/lib/socket";
 import { toast } from "sonner";
+import AddEmergencyDialog from "./AddEmergencyDialog";
 
 const EmergencyCaseLogging = ({ hospitalId = "default" }) => {
   const [cases, setCases] = useState([]);
@@ -122,10 +123,13 @@ const EmergencyCaseLogging = ({ hospitalId = "default" }) => {
               Real-time emergency cases and critical alerts
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <AddEmergencyDialog hospitalId={hospitalId} onSuccess={fetchData} />
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

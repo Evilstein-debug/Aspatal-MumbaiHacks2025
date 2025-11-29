@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { opdAPI } from "@/lib/api";
 import socketService from "@/lib/socket";
 import { toast } from "sonner";
+import AddOPDPatientDialog from "./AddOPDPatientDialog";
 
 const OPDPatientTracking = ({ hospitalId = "default" }) => {
   const [queue, setQueue] = useState([]);
@@ -107,10 +108,13 @@ const OPDPatientTracking = ({ hospitalId = "default" }) => {
               Real-time OPD queue and patient status
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <AddOPDPatientDialog hospitalId={hospitalId} onSuccess={fetchData} />
+            <Button variant="outline" size="sm" onClick={fetchData}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

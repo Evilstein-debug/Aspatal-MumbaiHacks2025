@@ -40,6 +40,7 @@ function DashboardMain() {
   const [activeTab, setActiveTab] = useState("overview");
   const [hospitalId] = useState(routeHospitalId || "default");
   const [notifications, setNotifications] = useState([]);
+  const [doctorRefreshKey, setDoctorRefreshKey] = useState(0);
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -284,7 +285,10 @@ function DashboardMain() {
                         hospitalId={hospitalId}
                         data={dashboardData?.doctors}
                       />
-                      <DoctorAvailabilityTable hospitalId={hospitalId} />
+                      <DoctorAvailabilityTable
+                        hospitalId={hospitalId}
+                        refreshKey={doctorRefreshKey}
+                      />
                       <PredictivePatientInflow hospitalId={hospitalId} />
                     </div>
 
@@ -320,7 +324,10 @@ function DashboardMain() {
                   <h2 className="text-2xl font-bold text-gray-900 mb-6">
                     Doctor Shift Management
                   </h2>
-                  <DoctorShiftManagement hospitalId={hospitalId} />
+                  <DoctorShiftManagement
+                    hospitalId={hospitalId}
+                    onDoctorAdded={() => setDoctorRefreshKey((prev) => prev + 1)}
+                  />
                 </div>
               )}
 

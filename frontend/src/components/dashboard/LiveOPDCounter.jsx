@@ -2,22 +2,45 @@ import React, { useState, useEffect } from "react";
 import { Users, Clock, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { opdAPI } from "@/lib/api";
+import { toast } from "sonner";
 
-const LiveOPDCounter = () => {
-  const [waitingPatients, setWaitingPatients] = useState(42);
-  const [avgWaitTime, setAvgWaitTime] = useState(25);
+const LiveOPDCounter = ({ hospitalId = "default" }) => {
+  const [waitingPatients, setWaitingPatients] = useState(0);
+  const [avgWaitTime, setAvgWaitTime] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  // Simulate real-time updates
+  const calculateAverageWait = (queue) => {
+    if (!queue.length) return 0;
+    const now = Date.now();
+    const totalMinutes = queue.reduce((sum, patient) => {
+      const registered = patient.registrationTime ? new Date(patient.registrationTime).getTime() : now;
+      const diff = Math.max(0, now - registered);
+      return sum + diff / 1000 / 60;
+    }, 0);
+    return Math.round(totalMinutes / queue.length);
+  };
+
   useEffect(() => {
-    const interval = setInterval(() => {
-      // Random variation in waiting patients (between 35-50)
-      setWaitingPatients(Math.floor(Math.random() * 15) + 35);
-      // Random variation in wait time (between 20-30 minutes)
-      setAvgWaitTime(Math.floor(Math.random() * 10) + 20);
-    }, 5000); // Update every 5 seconds
+    const fetchQueue = async () => {
+      try {
+        setLoading(true);
+        const queue = await opdAPI.getQueue(hospitalId);
+        const waiting = queue.filter((patient) => patient.status === "waiting");
+        setWaitingPatients(waiting.length);
+        setAvgWaitTime(calculateAverageWait(waiting));
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load OPD queue");
+      } finally {
+        setLoading(false);
+      }
+    };
 
+    fetchQueue();
+    const interval = setInterval(fetchQueue, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [hospitalId]);
 
   const getWaitTimeColor = (time) => {
     if (time > 30) return "text-red-600";
@@ -41,7 +64,7 @@ const LiveOPDCounter = () => {
           {/* Main Counter */}
           <div className="text-center p-6 bg-white rounded-lg border-2 border-blue-200">
             <div className="text-5xl font-bold text-blue-600 mb-2">
-              {waitingPatients}
+              {loading ? "—" : waitingPatients}
             </div>
             <p className="text-gray-600 font-medium">Patients Waiting</p>
           </div>
@@ -54,7 +77,7 @@ const LiveOPDCounter = () => {
                 <span className="text-sm text-gray-600">Avg. Wait Time</span>
               </div>
               <span className={`text-2xl font-bold ${getWaitTimeColor(avgWaitTime)}`}>
-                {avgWaitTime} min
+                {loading ? "—" : `${avgWaitTime} min`}
               </span>
             </div>
           </div>

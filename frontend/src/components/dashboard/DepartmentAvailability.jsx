@@ -1,40 +1,61 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Activity, Stethoscope, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { bedAPI } from "@/lib/api";
+import { toast } from "sonner";
 
-const DepartmentAvailability = () => {
-  // Placeholder data
-  const departments = [
-    {
-      name: "ICU",
-      icon: Activity,
-      total: 30,
-      occupied: 28,
-      available: 2,
-      color: "red",
-      critical: true
-    },
-    {
-      name: "General Ward",
-      icon: Stethoscope,
-      total: 120,
-      occupied: 85,
-      available: 35,
-      color: "green",
-      critical: false
-    },
-    {
-      name: "Emergency",
-      icon: AlertCircle,
-      total: 50,
-      occupied: 32,
-      available: 18,
-      color: "orange",
-      critical: false
-    }
-  ];
+const ICON_MAP = {
+  icu: Activity,
+  general: Stethoscope,
+  ventilator: AlertCircle,
+  isolation: AlertCircle
+};
+
+const COLOR_MAP = {
+  icu: "red",
+  general: "green",
+  ventilator: "orange",
+  isolation: "purple"
+};
+
+const DepartmentAvailability = ({ hospitalId = "default" }) => {
+  const [departments, setDepartments] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const response = await bedAPI.getRealTime(hospitalId);
+        const beds = response?.beds || [];
+        const deptData = beds.map((bed) => {
+          const total = bed.totalBeds || 0;
+          const occupied = bed.occupiedBeds || 0;
+          const available = bed.availableBeds || Math.max(total - occupied, 0);
+          const utilization = total > 0 ? (occupied / total) * 100 : 0;
+          return {
+            name: bed.bedType?.toUpperCase() || "Unknown",
+            icon: ICON_MAP[bed.bedType] || Stethoscope,
+            total,
+            occupied,
+            available,
+            color: COLOR_MAP[bed.bedType] || "green",
+            critical: utilization >= 85
+          };
+        });
+        setDepartments(deptData);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load department availability");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [hospitalId]);
 
   const getColorClasses = (color) => {
     const colors = {
@@ -51,6 +72,34 @@ const DepartmentAvailability = () => {
     if (percentage >= 70) return "bg-orange-500";
     return "bg-green-500";
   };
+
+  if (loading) {
+    return (
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle className="text-2xl">Department-wise Availability</CardTitle>
+          <CardDescription>Real-time bed availability across departments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-gray-500 py-10">Loading...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!departments.length) {
+    return (
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle className="text-2xl">Department-wise Availability</CardTitle>
+          <CardDescription>Real-time bed availability across departments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-gray-500 py-10">No bed data available</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300">

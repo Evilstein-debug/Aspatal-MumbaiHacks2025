@@ -1,6 +1,7 @@
 import BedOccupancy from "../models/bedOccupancy.js";
 import mongoose from "mongoose";
 import { emitBedOccupancyUpdate } from "../socket/socketServer.js";
+import { resolveHospitalId } from "../utils/hospitalHelper.js";
 
 const getMatchStage = (hospitalId) => {
   if (mongoose.Types.ObjectId.isValid(hospitalId)) {
@@ -23,7 +24,7 @@ const computeSummaryFromBeds = (beds = []) => {
 // Get all bed occupancies for a hospital
 export const getBedOccupancy = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const beds = await BedOccupancy.find({ hospitalId }).sort({ bedType: 1 });
     res.json(beds);
   } catch (error) {
@@ -34,7 +35,7 @@ export const getBedOccupancy = async (req, res) => {
 // Get real-time bed occupancy
 export const getRealTimeBedOccupancy = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const beds = await BedOccupancy.find({ hospitalId })
       .sort({ lastUpdated: -1 })
       .limit(10);
@@ -68,7 +69,8 @@ export const getRealTimeBedOccupancy = async (req, res) => {
 // Update bed occupancy
 export const updateBedOccupancy = async (req, res) => {
   try {
-    const { hospitalId, bedType } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
+    const { bedType } = req.params;
     const { totalBeds, occupiedBeds, reservedBeds } = req.body;
 
     const availableBeds = totalBeds - occupiedBeds - (reservedBeds || 0);
@@ -97,7 +99,7 @@ export const updateBedOccupancy = async (req, res) => {
 // Create bed occupancy record
 export const createBedOccupancy = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const bed = new BedOccupancy({ ...req.body, hospitalId });
     await bed.save();
     res.status(201).json(bed);
@@ -109,7 +111,7 @@ export const createBedOccupancy = async (req, res) => {
 // Get bed occupancy statistics
 export const getBedStatistics = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const matchStage = getMatchStage(hospitalId);
     let stats = [];
 

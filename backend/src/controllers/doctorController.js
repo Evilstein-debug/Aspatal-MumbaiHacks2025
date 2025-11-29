@@ -1,6 +1,7 @@
 import Doctor from "../models/doctor.js";
 import mongoose from "mongoose";
 import { emitDoctorShiftChange } from "../socket/socketServer.js";
+import { resolveHospitalId } from "../utils/hospitalHelper.js";
 
 // Validation helper
 const validateDoctorData = (data, isUpdate = false) => {
@@ -33,7 +34,7 @@ const validateDoctorData = (data, isUpdate = false) => {
 // GET /api/doctors - Get all doctors
 export const getAllDoctors = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { specialization, status, currentShift, department } = req.query;
 
     const query = { hospitalId };
@@ -73,7 +74,7 @@ export const getDoctorById = async (req, res) => {
 // POST /api/doctors - Create new doctor
 export const createDoctor = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const validationErrors = validateDoctorData(req.body);
 
     if (validationErrors.length > 0) {
@@ -193,7 +194,7 @@ export const deleteDoctor = async (req, res) => {
 // GET /api/doctors/:hospitalId/on-duty - Get doctors on duty
 export const getDoctorsOnDuty = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const doctors = await Doctor.find({
       hospitalId,
       status: "on-duty"

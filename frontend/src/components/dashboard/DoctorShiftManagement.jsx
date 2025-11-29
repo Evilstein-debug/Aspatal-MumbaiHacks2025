@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { shiftAPI } from "@/lib/api";
 import socketService from "@/lib/socket";
 import { toast } from "sonner";
+import AddShiftDialog from "./AddShiftDialog";
+import AddDoctorDialog from "./AddDoctorDialog";
 
-const DoctorShiftManagement = ({ hospitalId = "default" }) => {
+const DoctorShiftManagement = ({ hospitalId = "default", onDoctorAdded }) => {
   const [shifts, setShifts] = useState([]);
   const [activeShifts, setActiveShifts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,15 @@ const DoctorShiftManagement = ({ hospitalId = "default" }) => {
               Manage and monitor doctor shifts
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <AddDoctorDialog
+              hospitalId={hospitalId}
+              onSuccess={() => {
+                fetchShifts();
+                if (onDoctorAdded) onDoctorAdded();
+              }}
+            />
+            <AddShiftDialog hospitalId={hospitalId} onSuccess={fetchShifts} />
             <input
               type="date"
               value={selectedDate}

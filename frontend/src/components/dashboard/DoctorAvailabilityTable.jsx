@@ -1,82 +1,96 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { User, Clock, Stethoscope } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { doctorAPI } from "@/lib/api";
+import { toast } from "sonner";
 
-const DoctorAvailabilityTable = () => {
-  // Placeholder data
-  const doctors = [
-    {
-      id: 1,
-      name: "Dr. Rajesh Kumar",
-      specialty: "Cardiology",
-      shift: "Morning",
-      timing: "08:00 - 16:00",
-      status: "available",
-      patients: 12
-    },
-    {
-      id: 2,
-      name: "Dr. Priya Sharma",
-      specialty: "Pediatrics",
-      shift: "Morning",
-      timing: "08:00 - 16:00",
-      status: "busy",
-      patients: 25
-    },
-    {
-      id: 3,
-      name: "Dr. Amit Patel",
-      specialty: "Orthopedics",
-      shift: "Evening",
-      timing: "16:00 - 00:00",
-      status: "available",
-      patients: 8
-    },
-    {
-      id: 4,
-      name: "Dr. Sneha Desai",
-      specialty: "Neurology",
-      shift: "Night",
-      timing: "00:00 - 08:00",
-      status: "available",
-      patients: 5
-    },
-    {
-      id: 5,
-      name: "Dr. Vikram Singh",
-      specialty: "Emergency Medicine",
-      shift: "Morning",
-      timing: "08:00 - 16:00",
-      status: "busy",
-      patients: 18
-    },
-    {
-      id: 6,
-      name: "Dr. Anjali Mehta",
-      specialty: "General Medicine",
-      shift: "Evening",
-      timing: "16:00 - 00:00",
-      status: "available",
-      patients: 15
-    }
-  ];
+const SHIFT_COLORS = {
+  morning: "bg-blue-100 text-blue-700",
+  evening: "bg-purple-100 text-purple-700",
+  night: "bg-indigo-100 text-indigo-700",
+  off: "bg-gray-100 text-gray-700"
+};
+
+const STATUS_BADGES = {
+  active: "bg-green-500 text-white",
+  "on-duty": "bg-green-500 text-white",
+  "off-duty": "bg-gray-500 text-white",
+  "on-leave": "bg-yellow-500 text-white",
+  suspended: "bg-red-500 text-white"
+};
+
+const DoctorAvailabilityTable = ({ hospitalId = "default", refreshKey = 0 }) => {
+  const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      try {
+        setLoading(true);
+        const response = await doctorAPI.getDoctors(hospitalId);
+        const data = response?.data || response?.doctors || [];
+        setDoctors(data);
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load doctors");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDoctors();
+  }, [hospitalId, refreshKey]);
 
   const getStatusBadge = (status) => {
-    if (status === "available") {
-      return <Badge className="bg-green-500 text-white">Available</Badge>;
-    }
-    return <Badge className="bg-orange-500 text-white">Busy</Badge>;
+    const variant = STATUS_BADGES[status] || STATUS_BADGES.active;
+    return <Badge className={variant}>{status?.replace("-", " ") || "active"}</Badge>;
   };
 
-  const getShiftColor = (shift) => {
-    const colors = {
-      Morning: "bg-blue-100 text-blue-700",
-      Evening: "bg-purple-100 text-purple-700",
-      Night: "bg-indigo-100 text-indigo-700"
-    };
-    return colors[shift] || colors.Morning;
+  const getShiftBadge = (shift) => {
+    const label = shift
+      ? `${shift.charAt(0).toUpperCase()}${shift.slice(1)}`
+      : "Not Assigned";
+    return (
+      <Badge className={SHIFT_COLORS[shift] || SHIFT_COLORS.off}>
+        {label}
+      </Badge>
+    );
   };
+
+  if (loading) {
+    return (
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Stethoscope className="h-6 w-6 text-blue-600" />
+            Doctor Availability
+          </CardTitle>
+          <CardDescription>Current doctor status and shift timings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-gray-500 py-10">Loading...</div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!doctors.length) {
+    return (
+      <Card className="hover:shadow-lg transition-shadow duration-300">
+        <CardHeader>
+          <CardTitle className="text-2xl flex items-center gap-2">
+            <Stethoscope className="h-6 w-6 text-blue-600" />
+            Doctor Availability
+          </CardTitle>
+          <CardDescription>Current doctor status and shift timings</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-gray-500 py-10">No doctors found</div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -104,28 +118,33 @@ const DoctorAvailabilityTable = () => {
             </thead>
             <tbody>
               {doctors.map((doctor) => (
-                <tr key={doctor.id} className="border-b hover:bg-gray-50 transition-colors">
+                <tr key={doctor._id} className="border-b hover:bg-gray-50 transition-colors">
                   <td className="p-3">
                     <div className="flex items-center gap-2">
                       <User className="h-4 w-4 text-gray-500" />
                       <span className="font-medium">{doctor.name}</span>
                     </div>
                   </td>
-                  <td className="p-3 text-gray-600">{doctor.specialty}</td>
+                  <td className="p-3 text-gray-600">{doctor.specialization || doctor.department || "—"}</td>
+                  <td className="p-3">{getShiftBadge(doctor.currentShift)}</td>
                   <td className="p-3">
-                    <Badge className={getShiftColor(doctor.shift)}>
-                      {doctor.shift}
-                    </Badge>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-1 text-gray-600">
-                      <Clock className="h-4 w-4" />
-                      <span>{doctor.timing}</span>
-                    </div>
+                    {doctor.shiftTimings?.morning?.startTime ? (
+                      <div className="flex items-center gap-1 text-gray-600">
+                        <Clock className="h-4 w-4" />
+                        <span>
+                          {doctor.shiftTimings?.morning?.startTime} -{" "}
+                          {doctor.shiftTimings?.morning?.endTime}
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-gray-500 text-sm">Scheduled per shift</span>
+                    )}
                   </td>
                   <td className="p-3">{getStatusBadge(doctor.status)}</td>
                   <td className="p-3">
-                    <span className="font-semibold text-gray-700">{doctor.patients}</span>
+                    <span className="font-semibold text-gray-700">
+                      {doctor.currentPatientCount ?? "—"}
+                    </span>
                   </td>
                 </tr>
               ))}

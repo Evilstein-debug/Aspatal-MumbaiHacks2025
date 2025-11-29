@@ -3,21 +3,28 @@ import { Bed, Plus, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { bedAPI } from "@/lib/api";
+import { bedAPI, bedItemAPI } from "@/lib/api";
 import socketService from "@/lib/socket";
 import { toast } from "sonner";
+import AddBedDialog from "./AddBedDialog";
 
 const BedOccupancyDashboard = ({ hospitalId = "default" }) => {
   const [beds, setBeds] = useState([]);
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState({});
+  const [bedItems, setBedItems] = useState([]);
 
   const fetchBeds = async () => {
     try {
       setLoading(true);
-      const data = await bedAPI.getRealTime(hospitalId);
-      setBeds(data.beds || []);
-      setSummary(data.summary || {});
+      const [occupancyData, bedItemsResponse] = await Promise.all([
+        bedAPI.getRealTime(hospitalId),
+        bedItemAPI.getAllBeds(hospitalId)
+      ]);
+      setBeds(occupancyData.beds || []);
+      setSummary(occupancyData.summary || {});
+      const items = bedItemsResponse?.data || bedItemsResponse?.beds || bedItemsResponse || [];
+      setBedItems(Array.isArray(items) ? items : items.data || []);
     } catch (error) {
       toast.error("Failed to fetch bed occupancy data");
       console.error(error);
@@ -105,10 +112,13 @@ const BedOccupancyDashboard = ({ hospitalId = "default" }) => {
               Current bed status across all departments
             </CardDescription>
           </div>
-          <Button variant="outline" size="sm" onClick={fetchBeds}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <AddBedDialog hospitalId={hospitalId} onSuccess={fetchBeds} />
+            <Button variant="outline" size="sm" onClick={fetchBeds}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -203,6 +213,51 @@ const BedOccupancyDashboard = ({ hospitalId = "default" }) => {
         {beds.length === 0 && (
           <div className="text-center py-8 text-gray-500">
             No bed occupancy data available
+          </div>
+        )}
+
+        {bedItems.length > 0 && (
+          <div className="mt-8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-semibold">Latest Bed Entries</h3>
+              <Badge variant="outline">{bedItems.length} beds</Badge>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50">
+                    <th className="text-left p-2">Bed #</th>
+                    <th className="text-left p-2">Type</th>
+                    <th className="text-left p-2">Ward</th>
+                    <th className="text-left p-2">Floor</th>
+                    <th className="text-left p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bedItems.slice(0, 8).map((bed) => (
+                    <tr key={bed._id} className="border-b hover:bg-gray-50">
+                      <td className="p-2 font-medium">{bed.bedNumber}</td>
+                      <td className="p-2 capitalize">{bed.bedType}</td>
+                      <td className="p-2">{bed.ward || "—"}</td>
+                      <td className="p-2">{bed.floor ?? "—"}</td>
+                      <td className="p-2">
+                        <Badge
+                          className={
+                            bed.status === "available"
+                              ? "bg-green-500 text-white"
+                              : bed.status === "occupied"
+                              ? "bg-red-500 text-white"
+                              : "bg-yellow-500 text-white"
+                          }
+                        >
+                          {bed.status}
+                        </Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </CardContent>

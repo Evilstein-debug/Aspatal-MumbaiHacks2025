@@ -7,8 +7,12 @@ const SocketStatus = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    if (!socketService.isEnabled) {
+      return;
+    }
+
     socketService.connect();
-    
+
     const handleConnect = () => setIsConnected(true);
     const handleDisconnect = () => setIsConnected(false);
 
@@ -23,6 +27,15 @@ const SocketStatus = () => {
       socketService.off("disconnect", handleDisconnect);
     };
   }, []);
+
+  if (!socketService.isEnabled) {
+    return (
+      <Badge variant="outline" className="flex items-center gap-1 text-gray-500">
+        <WifiOff className="h-3 w-3" />
+        <span>Realtime Disabled</span>
+      </Badge>
+    );
+  }
 
   return (
     <Badge

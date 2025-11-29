@@ -1,10 +1,11 @@
 import DoctorShift from "../models/doctorShift.js";
 import mongoose from "mongoose";
+import { resolveHospitalId } from "../utils/hospitalHelper.js";
 
 // Get all shifts
 export const getShifts = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { date, shiftType, status } = req.query;
 
     const query = { hospitalId };
@@ -31,7 +32,7 @@ export const getShifts = async (req, res) => {
 // Create a shift
 export const createShift = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const shift = new DoctorShift({ ...req.body, hospitalId });
     await shift.save();
     await shift.populate("doctorId", "name email");
@@ -80,7 +81,7 @@ export const deleteShift = async (req, res) => {
 // Get current active shifts
 export const getActiveShifts = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5);
 
@@ -104,7 +105,7 @@ export const getActiveShifts = async (req, res) => {
 // Get shift statistics
 export const getShiftStatistics = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { startDate, endDate } = req.query;
 
     const matchQuery = { hospitalId };

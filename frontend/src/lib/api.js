@@ -39,6 +39,33 @@ export const bedAPI = {
     }),
 };
 
+// Individual Bed Items API
+export const bedItemAPI = {
+  getAllBeds: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/bed-items/${hospitalId}${queryString ? `?${queryString}` : ""}`);
+  },
+  getBedById: (bedId) => apiCall(`/bed-items/item/${bedId}`),
+  getAvailableBeds: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/bed-items/${hospitalId}/available${queryString ? `?${queryString}` : ""}`);
+  },
+  createBed: (hospitalId, data) =>
+    apiCall(`/bed-items/${hospitalId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateBed: (bedId, data) =>
+    apiCall(`/bed-items/item/${bedId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteBed: (bedId) =>
+    apiCall(`/bed-items/item/${bedId}`, {
+      method: "DELETE",
+    }),
+};
+
 // Doctor Shift API
 export const shiftAPI = {
   getShifts: (hospitalId, params = {}) => {
@@ -62,6 +89,30 @@ export const shiftAPI = {
     }),
   deleteShift: (shiftId) =>
     apiCall(`/shifts/${shiftId}`, {
+      method: "DELETE",
+    }),
+};
+
+// Doctors API
+export const doctorAPI = {
+  getDoctors: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    return apiCall(`/doctors/${hospitalId}${queryString ? `?${queryString}` : ""}`);
+  },
+  getDoctorById: (doctorId) => apiCall(`/doctors/item/${doctorId}`),
+  getOnDutyDoctors: (hospitalId) => apiCall(`/doctors/${hospitalId}/on-duty`),
+  createDoctor: (hospitalId, data) =>
+    apiCall(`/doctors/${hospitalId}`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateDoctor: (doctorId, data) =>
+    apiCall(`/doctors/item/${doctorId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  deleteDoctor: (doctorId) =>
+    apiCall(`/doctors/item/${doctorId}`, {
       method: "DELETE",
     }),
 };
@@ -112,6 +163,38 @@ export const emergencyAPI = {
     apiCall(`/emergency/${caseId}`, {
       method: "PUT",
       body: JSON.stringify(data),
+    }),
+};
+
+// Alerts API
+export const alertAPI = {
+  getAlerts: (hospitalId, params = {}) => {
+    const queryString = new URLSearchParams(params).toString();
+    const endpoint = hospitalId ? `/alerts/${hospitalId}` : "/alerts";
+    return apiCall(`${endpoint}${queryString ? `?${queryString}` : ""}`);
+  },
+  getActiveAlerts: (hospitalId) => {
+    const endpoint = hospitalId ? `/alerts/${hospitalId}/active` : "/alerts/active";
+    return apiCall(endpoint);
+  },
+  createAlert: (hospitalId, data) =>
+    apiCall(hospitalId ? `/alerts/${hospitalId}` : "/alerts", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  updateAlert: (alertId, data) =>
+    apiCall(`/alerts/item/${alertId}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    }),
+  acknowledgeAlert: (alertId, userId) =>
+    apiCall(`/alerts/item/${alertId}/acknowledge`, {
+      method: "PUT",
+      body: JSON.stringify({ userId }),
+    }),
+  deleteAlert: (alertId) =>
+    apiCall(`/alerts/item/${alertId}`, {
+      method: "DELETE",
     }),
 };
 

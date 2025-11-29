@@ -1,11 +1,12 @@
 import EmergencyCase from "../models/emergencyCase.js";
 import mongoose from "mongoose";
 import { emitEmergencyCase } from "../socket/socketServer.js";
+import { resolveHospitalId } from "../utils/hospitalHelper.js";
 
 // Get all emergency cases
 export const getEmergencyCases = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { status, triageLevel, date } = req.query;
 
     const query = { hospitalId };
@@ -33,7 +34,7 @@ export const getEmergencyCases = async (req, res) => {
 // Create emergency case
 export const createEmergencyCase = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const caseId = `EMG-${hospitalId}-${Date.now()}`;
 
     const emergencyCase = new EmergencyCase({
@@ -89,7 +90,7 @@ export const updateEmergencyCase = async (req, res) => {
 // Get critical cases
 export const getCriticalCases = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const cases = await EmergencyCase.find({
       hospitalId,
       triageLevel: "critical",
@@ -107,7 +108,7 @@ export const getCriticalCases = async (req, res) => {
 // Get emergency statistics
 export const getEmergencyStatistics = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { startDate, endDate } = req.query;
 
     const matchQuery = { hospitalId };

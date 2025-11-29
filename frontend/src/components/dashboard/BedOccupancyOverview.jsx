@@ -1,22 +1,49 @@
-import React from "react";
-import { Bed, Users } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Bed, Users, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { bedAPI } from "@/lib/api";
+import { toast } from "sonner";
 
 const COLORS = {
   occupied: "#ef4444",
   vacant: "#10b981"
 };
 
-const BedOccupancyOverview = () => {
-  // Placeholder data
-  const bedData = [
-    { name: "Occupied", value: 145, color: COLORS.occupied },
-    { name: "Vacant", value: 55, color: COLORS.vacant }
-  ];
+const BedOccupancyOverview = ({ hospitalId = "default" }) => {
+  const [summary, setSummary] = useState({ totalBeds: 0, occupiedBeds: 0, availableBeds: 0 });
+  const [loading, setLoading] = useState(true);
 
-  const totalBeds = bedData.reduce((sum, item) => sum + item.value, 0);
-  const occupancyRate = ((bedData[0].value / totalBeds) * 100).toFixed(1);
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        setLoading(true);
+        const response = await bedAPI.getRealTime(hospitalId);
+        const data = response?.summary || {};
+        setSummary({
+          totalBeds: data.totalBeds || 0,
+          occupiedBeds: data.occupiedBeds || 0,
+          availableBeds: data.availableBeds || 0
+        });
+      } catch (error) {
+        console.error(error);
+        toast.error("Failed to load bed occupancy summary");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSummary();
+  }, [hospitalId]);
+
+  const bedData = [
+    { name: "Occupied", value: summary.occupiedBeds, color: COLORS.occupied },
+    { name: "Vacant", value: summary.availableBeds, color: COLORS.vacant }
+  ].filter(item => item.value > 0);
+
+  const totalBeds = summary.totalBeds || 0;
+  const occupancyRate =
+    totalBeds > 0 ? ((summary.occupiedBeds / totalBeds) * 100).toFixed(1) : "0.0";
 
   return (
     <Card className="hover:shadow-lg transition-shadow duration-300">
@@ -37,26 +64,37 @@ const BedOccupancyOverview = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pie Chart */}
           <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={bedData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {bedData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            {loading ? (
+              <div className="flex items-center justify-center h-full text-gray-500">
+                Loading...
+              </div>
+            ) : totalBeds === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                <AlertCircle className="h-10 w-10 mb-2" />
+                <p>No bed data available</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={bedData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {bedData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </div>
 
           {/* Stats */}
@@ -65,7 +103,7 @@ const BedOccupancyOverview = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Occupied Beds</p>
-                  <p className="text-3xl font-bold text-red-600">{bedData[0].value}</p>
+                  <p className="text-3xl font-bold text-red-600">{summary.occupiedBeds}</p>
                 </div>
                 <Users className="h-8 w-8 text-red-600" />
               </div>
@@ -74,7 +112,7 @@ const BedOccupancyOverview = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Vacant Beds</p>
-                  <p className="text-3xl font-bold text-green-600">{bedData[1].value}</p>
+                  <p className="text-3xl font-bold text-green-600">{summary.availableBeds}</p>
                 </div>
                 <Bed className="h-8 w-8 text-green-600" />
               </div>

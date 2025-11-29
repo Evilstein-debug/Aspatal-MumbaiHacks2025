@@ -1,11 +1,12 @@
 import OPDPatient from "../models/opdPatient.js";
 import mongoose from "mongoose";
 import { emitOPDQueueUpdate } from "../socket/socketServer.js";
+import { resolveHospitalId } from "../utils/hospitalHelper.js";
 
 // Get all OPD patients
 export const getOPDPatients = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { status, date, department } = req.query;
 
     const query = { hospitalId };
@@ -32,7 +33,7 @@ export const getOPDPatients = async (req, res) => {
 // Create OPD patient
 export const createOPDPatient = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     
     // Get the next queue number for today
     const today = new Date();
@@ -125,7 +126,7 @@ export const updateOPDPatient = async (req, res) => {
 // Get OPD queue
 export const getOPDQueue = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { department } = req.query;
 
     const query = { 
@@ -147,7 +148,7 @@ export const getOPDQueue = async (req, res) => {
 // Get OPD statistics
 export const getOPDStatistics = async (req, res) => {
   try {
-    const { hospitalId } = req.params;
+    const hospitalId = await resolveHospitalId(req.params.hospitalId);
     const { startDate, endDate } = req.query;
 
     const matchQuery = { hospitalId };
