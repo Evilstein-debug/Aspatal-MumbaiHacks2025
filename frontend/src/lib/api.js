@@ -245,8 +245,8 @@ export const predictionAPI = {
 };
 
 export const surgeAPI = {
-  getForecast: (hospitalId) =>
-    surgeApiCall(`/forecast${hospitalId ? `?hospitalId=${hospitalId}` : ""}`)
+  getForecast: (hospitalId) => apiCall(`/predictions/surge/forecast/${hospitalId}`),
+  getCombinedPrediction: (params) => apiCall(`/predictions/combined`, { params }),
 };
 
 // Dashboard API
