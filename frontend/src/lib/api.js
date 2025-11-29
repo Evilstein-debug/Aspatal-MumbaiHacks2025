@@ -1,4 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+const SURGE_API_BASE_URL =
+  import.meta.env.VITE_SURGE_API_URL || "http://localhost:9000/api/surge";
 
 // Helper function for API calls
 const apiCall = async (endpoint, options = {}) => {
@@ -18,6 +20,27 @@ const apiCall = async (endpoint, options = {}) => {
     return await response.json();
   } catch (error) {
     console.error("API call failed:", error);
+    throw error;
+  }
+};
+
+const surgeApiCall = async (endpoint, options = {}) => {
+  try {
+    const response = await fetch(`${SURGE_API_BASE_URL}${endpoint}`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...options.headers
+      },
+      ...options
+    });
+
+    if (!response.ok) {
+      throw new Error(`Surge API error: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Surge API call failed:", error);
     throw error;
   }
 };
@@ -219,6 +242,11 @@ export const predictionAPI = {
       method: "PUT",
       body: JSON.stringify({ status }),
     }),
+};
+
+export const surgeAPI = {
+  getForecast: (hospitalId) =>
+    surgeApiCall(`/forecast${hospitalId ? `?hospitalId=${hospitalId}` : ""}`)
 };
 
 // Dashboard API

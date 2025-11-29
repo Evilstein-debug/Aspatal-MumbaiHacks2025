@@ -1,27 +1,48 @@
-import React, { useState, useEffect } from "react";
-import { TrendingUp, Cloud, Calendar, RefreshCw, AlertCircle } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  TrendingUp,
+  Cloud,
+  Calendar,
+  RefreshCw,
+  AlertTriangle,
+  Sparkles
+} from "lucide-react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Tooltip,
+  Legend
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { predictionAPI } from "@/lib/api";
+import { surgeAPI } from "@/lib/api";
 import { toast } from "sonner";
 
-const PredictionDashboard = ({ hospitalId = "default" }) => {
-  const [predictions, setPredictions] = useState([]);
-  const [upcoming, setUpcoming] = useState([]);
-  const [loading, setLoading] = useState(true);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
 
-  const fetchData = async () => {
+const surgeLevelStyles = {
+  LOW: "bg-emerald-100 text-emerald-700",
+  MEDIUM: "bg-amber-100 text-amber-700",
+  HIGH: "bg-rose-100 text-rose-700"
+};
+
+const PredictionDashboard = ({ hospitalId = "aspatal-mumbai" }) => {
+  const [forecast, setForecast] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchForecast = async () => {
     try {
       setLoading(true);
-      const [allPredictions, upcomingData] = await Promise.all([
-        predictionAPI.getPredictions(hospitalId),
-        predictionAPI.getUpcoming(hospitalId),
-      ]);
-      setPredictions(allPredictions);
-      setUpcoming(upcomingData);
+      const data = await surgeAPI.getForecast(hospitalId);
+      setForecast(data);
     } catch (error) {
-      toast.error("Failed to fetch prediction data");
+      toast.error("Unable to fetch surge forecast");
       console.error(error);
     } finally {
       setLoading(false);
@@ -29,176 +50,200 @@ const PredictionDashboard = ({ hospitalId = "default" }) => {
   };
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 60000); // Refresh every minute
+    fetchForecast();
+    const interval = setInterval(fetchForecast, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [hospitalId]);
 
-  const typeColors = {
-    pollution: "bg-orange-100 text-orange-800 border-orange-300",
-    festival: "bg-purple-100 text-purple-800 border-purple-300",
-    seasonal: "bg-blue-100 text-blue-800 border-blue-300",
-    general: "bg-gray-100 text-gray-800 border-gray-300",
-  };
+  const chartData = useMemo(() => {
+    if (!forecast?.history?.length || !forecast?.prediction) {
+      return null;
+    }
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+    const labels = forecast.history.map((day) =>
+      new Date(day.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      })
+    );
 
-  if (loading) {
+    const actualValues = forecast.history.map((day) => day.patientCount);
+    labels.push("Tomorrow");
+    actualValues.push(null);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Actual Patients",
+          data: actualValues,
+          borderColor: "rgba(37, 99, 235, 1)",
+          backgroundColor: "rgba(37, 99, 235, 0.1)",
+          fill: true,
+          tension: 0.35,
+          pointRadius: 3
+        },
+        {
+          label: "Predicted",
+          data: [
+            ...Array(forecast.history.length).fill(null),
+            forecast.prediction.predictedPatientLoad
+          ],
+          borderColor: "rgba(244, 114, 182, 1)",
+          borderDash: [6, 6],
+          pointBackgroundColor: "rgba(244, 114, 182, 1)",
+          pointBorderColor: "#fff",
+          pointBorderWidth: 2,
+          tension: 0.2
+        }
+      ]
+    };
+  }, [forecast]);
+
+  const surgeLevel = forecast?.prediction?.surgeLevel || "LOW";
+  const festivalInfo = forecast?.signals?.festivalProximity;
+  const recommendations = forecast?.prediction?.recommendations || [];
+  const festivalMessage = useMemo(() => {
+    if (!festivalInfo?.isFestivalNearby || !festivalInfo?.festival) {
+      return "No festival trigger in the next 72h";
+    }
+    const daysAway = festivalInfo.festival.daysAway ?? 0;
+    const timing =
+      daysAway === 0 ? "today" : daysAway > 0 ? `in ${daysAway}d` : `${Math.abs(daysAway)}d ago`;
+    return `Festival proximity: ${festivalInfo.festival.name} (${timing})`;
+  }, [festivalInfo]);
+
+  if (!forecast && loading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center h-64">
-            <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
+        <CardContent className="p-10 flex items-center justify-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-blue-600" />
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow duration-300">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-blue-600" />
-              Surge Predictions
-            </CardTitle>
-            <CardDescription className="mt-2">
-              Pollution spikes and festival season surge predictions
-            </CardDescription>
-          </div>
-          <Button variant="outline" size="sm" onClick={fetchData}>
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Upcoming Predictions */}
-        {upcoming.length > 0 && (
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-              <Calendar className="h-5 w-5 text-blue-600" />
-              Upcoming Predictions
-            </h3>
-            <div className="space-y-3">
-              {upcoming.map((prediction) => (
-                <div
-                  key={prediction._id}
-                  className="p-4 border-2 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-center gap-2">
-                      <Badge className={typeColors[prediction.predictionType]}>
-                        {prediction.predictionType}
-                      </Badge>
-                      <span className="text-sm text-gray-600">
-                        {formatDate(prediction.date)}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-blue-600">
-                        +{prediction.predictedSurge}
-                      </p>
-                      <p className="text-xs text-gray-500">predicted surge</p>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4 mt-3">
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Confidence</p>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-blue-600 h-2 rounded-full"
-                          style={{ width: `${prediction.confidence}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-xs text-gray-600 mt-1">
-                        {prediction.confidence}%
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-600 mb-1">Resource Needs</p>
-                      <p className="text-sm font-medium">
-                        {prediction.estimatedResourceNeeds?.beds || 0} beds,{" "}
-                        {prediction.estimatedResourceNeeds?.doctors || 0} doctors
-                      </p>
-                    </div>
-                  </div>
-                  {prediction.recommendations && prediction.recommendations.length > 0 && (
-                    <div className="mt-3 pt-3 border-t border-gray-200">
-                      <p className="text-xs font-semibold text-gray-700 mb-1">
-                        Recommendations:
-                      </p>
-                      <ul className="list-disc list-inside text-xs text-gray-600 space-y-1">
-                        {prediction.recommendations.slice(0, 3).map((rec, idx) => (
-                          <li key={idx}>{rec}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {prediction.factors?.pollutionLevel && (
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      <Cloud className="h-4 w-4 text-orange-600" />
-                      <span className="text-gray-600">
-                        Pollution Level: {prediction.factors.pollutionLevel} AQI
-                      </span>
-                    </div>
-                  )}
-                  {prediction.factors?.festivalName && (
-                    <div className="mt-2 flex items-center gap-2 text-xs">
-                      <Calendar className="h-4 w-4 text-purple-600" />
-                      <span className="text-gray-600">
-                        {prediction.factors.festivalName} (
-                        {prediction.factors.festivalIntensity} intensity)
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* All Predictions */}
+    <Card className="h-full">
+      <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h3 className="text-lg font-semibold mb-3">All Predictions</h3>
-          {predictions.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No predictions available
+          <CardTitle className="flex items-center gap-2 text-2xl">
+            <TrendingUp className="h-6 w-6 text-blue-600" />
+            Predictive Surge Intelligence
+          </CardTitle>
+          <CardDescription>
+            Gemini-enhanced surge forecasting with AQI, festival, and trend awareness
+          </CardDescription>
+        </div>
+        <Button variant="outline" size="sm" onClick={fetchForecast} disabled={loading}>
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border p-4 bg-gradient-to-br from-blue-50 to-white">
+            <p className="text-sm text-slate-500">Predicted Load</p>
+            <p className="text-4xl font-semibold text-slate-900">
+              {forecast?.prediction?.predictedPatientLoad ?? "--"}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">
+              Generated {forecast?.meta?.usedGemini ? "via Gemini" : "via fallback model"}
+            </p>
+          </div>
+          <div className="rounded-2xl border p-4">
+            <p className="text-sm text-slate-500 flex items-center gap-2">
+              <Cloud className="h-4 w-4 text-slate-500" />
+              AQI Signal
+            </p>
+            <p className="text-3xl font-semibold text-slate-900">
+              {forecast?.signals?.latestAqi ?? "--"}
+            </p>
+            <p className="text-xs text-slate-500 mt-1">Citywide respiratory risk indicator</p>
+          </div>
+          <div className="rounded-2xl border p-4">
+            <p className="text-sm text-slate-500 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-slate-500" />
+              Surge Level
+            </p>
+            <Badge className={`${surgeLevelStyles[surgeLevel] || "bg-gray-100 text-gray-700"} mt-2`}>
+              {surgeLevel}
+            </Badge>
+            <p className="text-xs text-slate-500 mt-2">{festivalMessage}</p>
+          </div>
+        </div>
+
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="rounded-2xl border p-4 lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <p className="font-semibold text-slate-800">Last 7 Days vs Prediction</p>
+              <p className="text-xs text-slate-500">
+                ICU avg {forecast?.signals?.avgIcuUsage ?? "--"} beds · Oxygen avg{" "}
+                {forecast?.signals?.avgOxygenConsumption ?? "--"} L
+              </p>
             </div>
-          ) : (
-            <div className="space-y-2">
-              {predictions.slice(0, 5).map((prediction) => (
-                <div
-                  key={prediction._id}
-                  className="p-3 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge className={typeColors[prediction.predictionType]}>
-                        {prediction.predictionType}
-                      </Badge>
-                      <span className="text-sm">{formatDate(prediction.date)}</span>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold">+{prediction.predictedSurge}</p>
-                      <p className="text-xs text-gray-500">
-                        {prediction.confidence}% confidence
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+            {chartData ? (
+              <Line
+                data={chartData}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      min: 150,
+                      grid: { color: "rgba(148, 163, 184, 0.2)" },
+                      ticks: { color: "#475569" }
+                    },
+                    x: {
+                      grid: { display: false },
+                      ticks: { color: "#475569" }
+                    }
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: { intersect: false }
+                  }
+                }}
+                className="h-64"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-64 text-slate-400 text-sm">
+                Waiting for history data...
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-2xl border p-4 bg-slate-50">
+            <p className="font-semibold text-slate-800 mb-2">Recommended Actions</p>
+            {recommendations.length ? (
+              <ul className="space-y-3">
+                {recommendations.map((rec) => (
+                  <li key={rec} className="flex items-start gap-2 text-sm text-slate-700">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 text-amber-500 shrink-0" />
+                    {rec}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-slate-500">No urgent actions required.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border p-4">
+          <p className="font-semibold text-slate-800 mb-3">Rationale</p>
+          <p className="text-sm text-slate-600">{forecast?.prediction?.reasoning}</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
+            <span className="px-3 py-1 rounded-full bg-slate-100">
+              Weekend load avg {forecast?.signals?.weekendLoad ?? "--"}
+            </span>
+            <span className="px-3 py-1 rounded-full bg-slate-100">
+              Data window {forecast?.history?.length ?? 0} days
+            </span>
+            <span className="px-3 py-1 rounded-full bg-slate-100">
+              Generated {forecast?.meta?.generatedAt ? new Date(forecast.meta.generatedAt).toLocaleString() : "--"}
+            </span>
+          </div>
         </div>
       </CardContent>
     </Card>
